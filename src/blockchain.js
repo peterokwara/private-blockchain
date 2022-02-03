@@ -34,7 +34,7 @@ class Blockchain {
    */
   async initializeChain() {
     if (this.height === -1) {
-      let block = new BlockClass.Block({ data: "Genesis Block" });
+      let block = new BlockClass.Block({ data: "Genesis block: The Times 03 Jan/2009 Chancellor on brink of second bailout for banks."});
       await this._addBlock(block);
     }
   }
@@ -43,7 +43,7 @@ class Blockchain {
    * Utility method that return a Promise that will resolve with the height of the chain
    */
   getChainHeight() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       resolve(this.height);
     });
   }
@@ -164,7 +164,7 @@ class Blockchain {
    */
   getBlockByHash(hash) {
     let self = this;
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let block = self.chain.find((b) => b.hash === hash);
       if (block) {
         resolve(block);
@@ -197,7 +197,7 @@ class Blockchain {
     return new Promise((resolve) => {
       try {
         let starsByWalletList = self.chain
-          .filter((p) => p.height > 0 && p.getBData().owner === address)
+          .filter((b) => b.height > 0 && b.getBData().owner === address)
           .map((block) => block.getBData());
         resolve(starsByWalletList);
       } catch (e) {
@@ -214,7 +214,6 @@ class Blockchain {
    */
   validateChain() {
     let self = this;
-    let errorLog = [];
     return new Promise(async (resolve, reject) => {
       let previousBlock = self.chain[0];
       for (let id = 1; id < self.chain.length; id++) {
@@ -224,7 +223,6 @@ class Blockchain {
           let valid = await block.validate();
 
           if (!valid) {
-            errorLog.push("invalid hash at " + block.height);
             throw new Error("Invalid hash at" + block.height);
           }
 
