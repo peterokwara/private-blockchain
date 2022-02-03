@@ -142,7 +142,11 @@ class Blockchain {
           throw new Error(`Invalid signature!`);
         }
 
-        const data = { owner: message.split(":")[0], star: star };
+        const data = {
+          owner: address,
+          message: message.split(":")[0],
+          star: star,
+        };
 
         const block = new BlockClass.Block(data);
         resolve(self._addBlock(block));
@@ -190,13 +194,16 @@ class Blockchain {
    */
   getStarsByWalletAddress(address) {
     let self = this;
-    return Promise.all(
-      self.chain.slice(1).map((block) => block.getBData())
-    ).then((allData) =>
-      allData
-        .filter((data) => data.address === address)
-        .map((data) => data.star)
-    );
+    return new Promise((resolve) => {
+      try {
+        let starsByWalletList = self.chain
+          .filter((p) => p.height > 0 && p.getBData().owner === address)
+          .map((block) => block.getBData());
+        resolve(starsByWalletList);
+      } catch (e) {
+        throw new Error(e);
+      }
+    });
   }
 
   /**
