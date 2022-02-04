@@ -34,7 +34,9 @@ class Blockchain {
    */
   async initializeChain() {
     if (this.height === -1) {
-      let block = new BlockClass.Block({ data: "Genesis block: The Times 03 Jan/2009 Chancellor on brink of second bailout for banks."});
+      let block = new BlockClass.Block({
+        data: "Genesis block: The Times 03 Jan/2009 Chancellor on brink of second bailout for banks.",
+      });
       await this._addBlock(block);
     }
   }
@@ -62,11 +64,11 @@ class Blockchain {
    */
   _addBlock(block) {
     let self = this;
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       try {
         // Get the previous block hash
         if (self.height != -1) {
-          block.previousBlockHash = this.chain[this.chain.length - 1].hash;
+          block.previousBlockHash = this.chain[self.height].hash;
         }
 
         // Block height
@@ -83,6 +85,14 @@ class Blockchain {
 
         // Update the block height
         self.height = block.height;
+
+        // Validate a block
+        const valid = await self.validateChain();
+
+        // Check if a block is valid, throw error if it's not
+        if (!valid) {
+          throw new Error("The block is not valid!");
+        }
 
         resolve(block);
       } catch (e) {
@@ -214,26 +224,31 @@ class Blockchain {
    */
   validateChain() {
     let self = this;
-    return new Promise(async (resolve, reject) => {
+    let errorLog = [];
+    return new Promise(async (resolve) => {
+      // Beginning of the chain
       let previousBlock = self.chain[0];
-      for (let id = 1; id < self.chain.length; id++) {
-        let block = self.chain[id];
-
+      // Loop through the blocks in the chain
+      for (const block of self.chain) {
+        console.log(block.height);
         try {
-          let valid = await block.validate();
+          if (block.height > 0) {
+            let isValid = await block.validate();
 
-          if (!valid) {
-            throw new Error("Invalid hash at" + block.height);
-          }
+            if (!isValid) {
+              errorLog.push("invalid hash at " + block.height);
+            }
 
-          if (previousBlock.hash !== block.previousBlockHash) {
-            throw new Error("Invalid previous block hash at" + block.height);
+            if (previousBlock.hash !== block.previousBlockHash) {
+              errorLog.push("invalid previousBlockHash at " + block.height);
+            }
           }
-        } catch (error) {
-          throw new Error(error);
+        } catch (e) {
+          throw new Error(e);
         }
         previousBlock = block;
       }
+      resolve(errorLog);
     });
   }
 }
